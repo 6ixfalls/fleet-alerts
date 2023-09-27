@@ -107,6 +107,10 @@ async function updateBundleDeployment(
     }
 
     const state = StateMap[obj.status?.state];
+    if (!state) {
+        logger.error(`Unknown state ${obj.status?.state}`);
+        return;
+    }
 
     octokit.rest.repos.createCommitStatus({
         owner: gitRepoRef.user,
