@@ -34,7 +34,7 @@ const StateMap: {
         description: "Bundle deployment failed",
     },
     OutOfSync: {
-        state: "error",
+        state: "pending",
         description: "Bundle deployment OutOfSync",
     },
     Pending: {
@@ -42,7 +42,7 @@ const StateMap: {
         description: "Bundle deployment in progress",
     },
     Modified: {
-        state: "success", // failure?
+        state: "failure",
         description: "Bundle deployment modified",
     },
 };
