@@ -93,6 +93,7 @@ async function updateGitRepos(
         user: match[1],
         repo: match[2],
     };
+    logger.info(`GitRepo ${obj.metadata.name} added ${match[1]}/${match[2]}`);
 }
 gitRepoInformer.on("add", updateGitRepos);
 gitRepoInformer.on("update", updateGitRepos);
@@ -123,11 +124,15 @@ async function updateBundleDeployment(
     }
     logger.info(`BundleDeployment ${obj.metadata.name} state changed`);
 
+    if (!obj.metadata.labels["fleet.cattle.io/repo-name"]) {
+        logger.info(`BundleDeployment ${obj.metadata.name} missing repo-name`);
+        return;
+    }
     const gitRepoRef =
         gitRepoRefs[obj.metadata.labels["fleet.cattle.io/repo-name"]];
     if (!gitRepoRef) {
         logger.error(
-            `GitRepoRef ${obj.metadata.labels["fleet.cattle.io/repo-name"]} not found`
+            `GitRepoRef ${obj.metadata.labels["fleet.cattle.io/repo-name"]} for ${obj.metadata.name} not found`
         );
         return;
     }
