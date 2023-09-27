@@ -1,5 +1,6 @@
 import * as k8s from "@kubernetes/client-node";
 import { Octokit, App } from "octokit";
+import { createAppAuth } from "@octokit/auth-app";
 import logger from "./logger.js";
 
 const kc = new k8s.KubeConfig();
@@ -46,7 +47,21 @@ const StateMap: {
     },
 };
 
-const octokit = new Octokit({ auth: process.env.GITHUB_ALERTS_PAT });
+let auth: any = process.env.GITHUB_ALERTS_PAT;
+if (
+    process.env.GITHUBAPPID &&
+    process.env.GITHUBAPPKEY &&
+    process.env.INSTALLATIONID
+) {
+    logger.info("Using GitHub App authentication");
+    auth = createAppAuth({
+        appId: parseInt(process.env.GITHUBAPPID || "0"),
+        privateKey: process.env.GITHUBAPPKEY || "",
+        installationId: parseInt(process.env.INSTALLATIONID || "0"),
+    });
+}
+
+const octokit = new Octokit({ auth });
 const {
     data: { login },
 } = await octokit.rest.users.getAuthenticated();
@@ -91,6 +106,13 @@ gitRepoInformer.on("delete", async (obj) => {
     }
     logger.info(`GitRepo ${obj.metadata.name} deleted`);
     delete gitRepoRefs[obj.metadata.name];
+});
+
+gitRepoInformer.on("error", (err) => {
+    logger.error(err);
+    setTimeout(() => {
+        gitRepoInformer.start();
+    }, 10000);
 });
 
 gitRepoInformer.start();
