@@ -4,7 +4,7 @@ import { createAppAuth } from "@octokit/auth-app";
 import logger from "./logger.js";
 
 const kc = new k8s.KubeConfig();
-kc.loadFromDefault();
+kc.loadFromCluster();
 const k8sApi = kc.makeApiClient(k8s.CustomObjectsApi);
 
 const apiVersion = process.env.API_VERSION || "fleet.cattle.io/v1alpha1";
