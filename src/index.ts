@@ -160,6 +160,11 @@ async function updateBundleDeployment(
                 process.env.RANCHER_EXPLORER_URL &&
                 `${process.env.RANCHER_EXPLORER_URL}/${group}.bundledeployment/${obj.metadata.namespace}/${obj.metadata.name}`,
         })
+        .then(({ data }) => {
+            logger.info(
+                `Pushed ${data.state} for ${data.context}: ${data.description} ${data.target_url}`
+            );
+        })
         .catch((err) => logger.error(err));
 }
 
