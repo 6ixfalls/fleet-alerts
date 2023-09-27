@@ -12,6 +12,8 @@ RUN npm install -g yarn && yarn install
 
 COPY --chown=node:node . .
 
+RUN yarn build
+
 ENV NODE_ENV=production
 
 CMD ["node", "dist/index.js"]
