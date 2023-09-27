@@ -107,7 +107,7 @@ gitRepoInformer.on("delete", async (obj) => {
 });
 
 gitRepoInformer.on("error", (err) => {
-    logger.error(err);
+    logger.error("GitRepoInformer error", err);
     setTimeout(() => {
         gitRepoInformer.start();
     }, 10000);
@@ -171,7 +171,7 @@ informer.on("delete", async (obj) => {
 });
 
 informer.on("error", (err) => {
-    logger.error(err);
+    logger.error("BundleDeploymentInformer error", err);
     setTimeout(() => {
         informer.start();
     }, 10000);
