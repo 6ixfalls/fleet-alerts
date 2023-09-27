@@ -66,7 +66,7 @@ const octokit = new Octokit(octokitConfig);
 
 const informer = k8s.makeInformer(
     kc,
-    `/apis/${apiVersion}/bundledeployment`,
+    `/apis/${apiVersion}/bundledeployments`,
     () =>
         //@ts-ignore
         k8sApi.listClusterCustomObject(group, version, "bundledeployments")
@@ -107,7 +107,8 @@ gitRepoInformer.on("delete", async (obj) => {
 });
 
 gitRepoInformer.on("error", (err) => {
-    logger.error("GitRepoInformer error", err);
+    logger.error("GitRepoInformer error, restarting in 10s");
+    logger.error(err);
     setTimeout(() => {
         gitRepoInformer.start();
     }, 10000);
@@ -171,7 +172,8 @@ informer.on("delete", async (obj) => {
 });
 
 informer.on("error", (err) => {
-    logger.error("BundleDeploymentInformer error", err);
+    logger.error("BundleDeploymentInformer error, restarting in 10s");
+    logger.error(err);
     setTimeout(() => {
         informer.start();
     }, 10000);
