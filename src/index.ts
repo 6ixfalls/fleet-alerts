@@ -51,13 +51,19 @@ let auth: any = process.env.GITHUB_ALERTS_PAT;
 if (
     process.env.GITHUBAPPID &&
     process.env.GITHUBAPPKEY &&
-    process.env.INSTALLATIONID
+    process.env.INSTALLATIONID &&
+    process.env.GITHUBAPPCLIENTID &&
+    process.env.GITHUBAPPCLIENTSECRET
 ) {
     logger.info("Using GitHub App authentication");
-    auth = createAppAuth({
-        appId: parseInt(process.env.GITHUBAPPID || "0"),
-        privateKey: process.env.GITHUBAPPKEY || "",
-        installationId: parseInt(process.env.INSTALLATIONID || "0"),
+    auth = await createAppAuth({
+        appId: parseInt(process.env.GITHUBAPPID),
+        privateKey: process.env.GITHUBAPPKEY,
+        clientId: process.env.GITHUBAPPCLIENTID,
+        clientSecret: process.env.GITHUBAPPCLIENTSECRET,
+    })({
+        type: "installation",
+        installationId: parseInt(process.env.INSTALLATIONID),
     });
 }
 
