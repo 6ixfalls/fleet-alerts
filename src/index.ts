@@ -47,7 +47,7 @@ const StateMap: {
     },
 };
 
-let auth: any = process.env.GITHUB_ALERTS_PAT;
+let octokitConfig: any = { auth: process.env.GITHUB_ALERTS_PAT };
 if (
     process.env.GITHUBAPPID &&
     process.env.GITHUBAPPKEY &&
@@ -56,18 +56,17 @@ if (
     process.env.GITHUBAPPCLIENTSECRET
 ) {
     logger.info("Using GitHub App authentication");
-    auth = await createAppAuth({
+    octokitConfig.authStrategy = createAppAuth;
+    octokitConfig.auth = {
         appId: parseInt(process.env.GITHUBAPPID),
         privateKey: process.env.GITHUBAPPKEY,
         clientId: process.env.GITHUBAPPCLIENTID,
         clientSecret: process.env.GITHUBAPPCLIENTSECRET,
-    })({
-        type: "installation",
         installationId: parseInt(process.env.INSTALLATIONID),
-    });
+    };
 }
 
-const octokit = new Octokit({ auth });
+const octokit = new Octokit(octokitConfig);
 const {
     data: { login },
 } = await octokit.rest.users.getAuthenticated();
