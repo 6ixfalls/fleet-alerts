@@ -67,10 +67,6 @@ if (
 }
 
 const octokit = new Octokit(octokitConfig);
-const {
-    data: { login },
-} = await octokit.rest.users.getAuthenticated();
-logger.info(`Logged in as ${login}`);
 
 const informer = k8s.makeInformer(
     kc,
