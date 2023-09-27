@@ -1,10 +1,6 @@
-import * as dotenv from "dotenv";
-import path from "path";
 import * as k8s from "@kubernetes/client-node";
 import { Octokit, App } from "octokit";
 import logger from "./logger.js";
-
-dotenv.config({ path: path.resolve(process.cwd(), "../.env") });
 
 const kc = new k8s.KubeConfig();
 kc.loadFromDefault();
