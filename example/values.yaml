@@ -1,0 +1,15 @@
+# Chart: https://github.com/bjw-s/helm-charts/tree/main/charts/other/app-template
+serviceAccount:
+  create: true
+  name: fleet-alerts-monitor
+service:
+  main:
+    enabled: false
+    type: Headless
+image:
+  pullPolicy: Always
+  repository: ghcr.io/6ixfalls/fleet-alerts
+  tag: main
+envFrom:
+  - secretRef:
+      name: gitjob-webhook
