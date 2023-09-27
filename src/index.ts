@@ -51,17 +51,13 @@ let octokitConfig: any = { auth: process.env.GITHUB_ALERTS_PAT };
 if (
     process.env.GITHUBAPPID &&
     process.env.GITHUBAPPKEY &&
-    process.env.INSTALLATIONID &&
-    process.env.GITHUBAPPCLIENTID &&
-    process.env.GITHUBAPPCLIENTSECRET
+    process.env.INSTALLATIONID
 ) {
     logger.info("Using GitHub App authentication");
     octokitConfig.authStrategy = createAppAuth;
     octokitConfig.auth = {
         appId: parseInt(process.env.GITHUBAPPID),
         privateKey: process.env.GITHUBAPPKEY,
-        clientId: process.env.GITHUBAPPCLIENTID,
-        clientSecret: process.env.GITHUBAPPCLIENTSECRET,
         installationId: parseInt(process.env.INSTALLATIONID),
     };
 }
@@ -146,17 +142,19 @@ async function updateBundleDeployment(
         return;
     }
 
-    octokit.rest.repos.createCommitStatus({
-        owner: gitRepoRef.user,
-        repo: gitRepoRef.repo,
-        sha: obj.metadata.labels["fleet.cattle.io/commit"],
-        context: obj.metadata.name,
-        state: state.state,
-        description: state.description,
-        target_url:
-            process.env.RANCHER_EXPLORER_URL &&
-            `${process.env.RANCHER_EXPLORER_URL}/${group}.bundledeployment/${obj.metadata.namespace}/${obj.metadata.name}`,
-    });
+    await octokit.rest.repos
+        .createCommitStatus({
+            owner: gitRepoRef.user,
+            repo: gitRepoRef.repo,
+            sha: obj.metadata.labels["fleet.cattle.io/commit"],
+            context: obj.metadata.name,
+            state: state.state,
+            description: state.description,
+            target_url:
+                process.env.RANCHER_EXPLORER_URL &&
+                `${process.env.RANCHER_EXPLORER_URL}/${group}.bundledeployment/${obj.metadata.namespace}/${obj.metadata.name}`,
+        })
+        .catch((err) => logger.error(err));
 }
 
 informer.on("add", updateBundleDeployment);
