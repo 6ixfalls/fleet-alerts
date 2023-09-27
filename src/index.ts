@@ -60,43 +60,50 @@ const informer = k8s.makeInformer(
         k8sApi.listClusterCustomObject(group, version, "bundledeployments")
 );
 
-const watch = new k8s.Watch(kc);
-const gitRepoRefs: { [name: string]: { user: string; repo: string } } = {};
-const request = await watch.watch(
+const gitRepoInformer = k8s.makeInformer(
+    kc,
     `/apis/${apiVersion}/gitrepos`,
-    {},
-    (type, obj) => {
-        if (type === "ADDED") {
-            const match = obj.spec.repo.match(
-                /git@github\.com:(.*)\/(.*)\.git/
-            ); // git@github.com:username/repo.git
-            gitRepoRefs[obj.metadata.name] = {
-                user: match[1],
-                repo: match[2],
-            };
-        } else if (type === "MODIFIED") {
-            const match = obj.spec.repo.match(
-                /git@github\.com:(.*)\/(.*)\.git/
-            );
-            gitRepoRefs[obj.metadata.name] = {
-                user: match[1],
-                repo: match[2],
-            };
-        } else if (type === "DELETED") {
-            delete gitRepoRefs[obj.metadata.name];
-        }
-    },
-    (err) => logger.error(err)
+    () =>
+        //@ts-ignore
+        k8sApi.listClusterCustomObject(group, version, "gitrepos")
 );
+const gitRepoRefs: { [name: string]: { user: string; repo: string } } = {};
+
+async function updateGitRepos(
+    obj: k8s.KubernetesObject & { [key: string]: any }
+) {
+    if (!obj.metadata || !obj.metadata.name) {
+        logger.error(`GitRepo missing metadata`);
+        return;
+    }
+    const match = obj.spec.repo.match(/git@github\.com:(.*)\/(.*)\.git/); // git@github.com:username/repo.git
+    gitRepoRefs[obj.metadata.name] = {
+        user: match[1],
+        repo: match[2],
+    };
+}
+gitRepoInformer.on("add", updateGitRepos);
+gitRepoInformer.on("update", updateGitRepos);
+gitRepoInformer.on("delete", async (obj) => {
+    if (!obj.metadata || !obj.metadata.name) {
+        logger.error(`GitRepo missing metadata`);
+        return;
+    }
+    logger.info(`GitRepo ${obj.metadata.name} deleted`);
+    delete gitRepoRefs[obj.metadata.name];
+});
+
+gitRepoInformer.start();
 
 async function updateBundleDeployment(
     obj: k8s.KubernetesObject & { [key: string]: any }
 ) {
-    logger.info(`BundleDeployment ${obj.metadata?.name} state changed`);
     if (!obj.metadata || !obj.metadata.labels) {
         logger.error(`BundleDeployment missing metadata`);
         return;
     }
+    logger.info(`BundleDeployment ${obj.metadata.name} state changed`);
+
     const gitRepoRef =
         gitRepoRefs[obj.metadata.labels["fleet.cattle.io/repo-name"]];
     if (!gitRepoRef) {
@@ -106,9 +113,13 @@ async function updateBundleDeployment(
         return;
     }
 
-    const state = StateMap[obj.status?.state];
+    if (!obj.status || !obj.status.display || !obj.status.display.state) {
+        logger.error(`BundleDeployment ${obj.metadata.name} missing status`);
+        return;
+    }
+    const state = StateMap[obj.status.display.state];
     if (!state) {
-        logger.error(`Unknown state ${obj.status?.state}`);
+        logger.error(`Unknown state ${obj.status.display.state}`);
         return;
     }
 
